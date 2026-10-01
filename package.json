@@ -1,0 +1,14 @@
+{
+  "name": "kcrw-spotify",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "KCRW Morning Becomes Eclectic tracklists, one click to copy into a Spotify playlist",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}
