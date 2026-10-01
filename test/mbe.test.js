@@ -108,6 +108,15 @@ describe('parseTracks', () => {
     expect(out.onSpotify[0].datetime).toBeNull();
   });
 
+  it('keeps a consistent order when dated and undated rows interleave', () => {
+    const out = parseTracks([
+      row({ spotify_id: 'late', datetime: '2026-09-30T11:00:00-07:00' }),
+      row({ spotify_id: 'undated', datetime: null }),
+      row({ spotify_id: 'early', datetime: '2026-09-30T09:00:00-07:00' }),
+    ]);
+    expect(out.onSpotify.map((t) => t.spotifyId)).toEqual(['early', 'late', 'undated']);
+  });
+
   it('dedupes by spotify_id keeping first play', () => {
     const out = parseTracks([
       row({ spotify_id: 'a', datetime: '2026-09-30T09:05:00-07:00', time: '9:05 AM' }),

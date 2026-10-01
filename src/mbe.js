@@ -57,13 +57,20 @@ export function parseTracks(rows) {
 
   const host = programRows.length ? str(programRows[0].host) || null : null;
 
-  // Stable sort: rows without datetime keep their relative position and sort
-  // before dated rows only if they came first in the input.
-  const indexed = programRows.map((r, i) => ({ t: toTrack(r), i }));
+  // Give every row a sort key so the comparator is a total order: a row with
+  // its own datetime uses that; a row without one inherits the datetime of
+  // the most recent preceding dated row (or '' if none came before it). Then
+  // sort by (key, input index) ascending, so undated rows stay anchored near
+  // where KCRW placed them instead of causing comparator cycles.
+  let lastDatetime = '';
+  const indexed = programRows.map((r, i) => {
+    const t = toTrack(r);
+    if (t.datetime) lastDatetime = t.datetime;
+    return { t, i, key: t.datetime || lastDatetime };
+  });
   indexed.sort((a, b) => {
-    if (a.t.datetime && b.t.datetime) {
-      return a.t.datetime < b.t.datetime ? -1 : a.t.datetime > b.t.datetime ? 1 : a.i - b.i;
-    }
+    if (a.key < b.key) return -1;
+    if (a.key > b.key) return 1;
     return a.i - b.i;
   });
 
