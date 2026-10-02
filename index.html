@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KCRW MBE → Spotify</title>
+<meta name="description" content="Today's KCRW Morning Becomes Eclectic tracklist. One click to copy the Spotify links, paste into a playlist.">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fafafa;
+    --fg: #111;
+    --muted: #666;
+    --line: #e2e2e2;
+    --accent: #1db954;
+    --accent-fg: #fff;
+    --warn-bg: #fff7e0;
+    --warn-fg: #6b4e00;
+    --err-bg: #fde8e8;
+    --err-fg: #7a1a1a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121212;
+      --fg: #eee;
+      --muted: #9a9a9a;
+      --line: #2a2a2a;
+      --warn-bg: #3a2f10;
+      --warn-fg: #ffd56b;
+      --err-bg: #3a1515;
+      --err-fg: #ff9a9a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 680px; margin: 0 auto; }
+  header h1 { font-size: 1.1rem; margin: 0; color: var(--muted); font-weight: 500; }
+  header h2 { font-size: 1.6rem; margin: 4px 0 0; }
+  header .host { color: var(--muted); margin: 2px 0 0; min-height: 1.4em; }
+  nav {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  nav button, nav input[type=date] {
+    font: inherit; padding: 8px 12px; border-radius: 8px;
+    border: 1px solid var(--line); background: transparent; color: var(--fg);
+  }
+  nav button:disabled { opacity: .4; cursor: default; }
+  nav button:not(:disabled) { cursor: pointer; }
+  .copy-row { display: flex; flex-direction: column; gap: 6px; margin: 16px 0; }
+  #copy {
+    font: inherit; font-weight: 600; font-size: 1.05rem;
+    padding: 14px 18px; border: 0; border-radius: 999px;
+    background: var(--accent); color: var(--accent-fg); cursor: pointer;
+  }
+  #copy:disabled { opacity: .5; cursor: default; }
+  #copy-hint { color: var(--muted); font-size: .95rem; min-height: 1.4em; }
+  #status { padding: 12px 14px; border-radius: 8px; margin: 12px 0; }
+  #status[data-kind="loading"] { color: var(--muted); }
+  #status[data-kind="empty"] { background: var(--warn-bg); color: var(--warn-fg); }
+  #status[data-kind="error"] { background: var(--err-bg); color: var(--err-fg); }
+  #status button { font: inherit; margin-left: 8px; cursor: pointer; }
+  ol#tracks { list-style: none; padding: 0; margin: 0; }
+  ol#tracks li {
+    display: grid; grid-template-columns: 48px 1fr auto; gap: 12px;
+    align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line);
+  }
+  ol#tracks img, ol#tracks .noart {
+    width: 48px; height: 48px; border-radius: 4px; background: var(--line); object-fit: cover;
+  }
+  ol#tracks .title { font-weight: 600; }
+  ol#tracks .artist { color: var(--muted); }
+  ol#tracks .time { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .9rem; }
+  ol#tracks li.off { opacity: .55; }
+  ol#tracks li.off .title::after { content: " · not on Spotify"; font-weight: 400; color: var(--muted); }
+  #missing { color: var(--muted); font-size: .95rem; margin: 12px 0; }
+  #fallback { margin: 12px 0; }
+  #fallback textarea {
+    width: 100%; height: 160px; font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 8px; border-radius: 8px; border: 1px solid var(--line);
+    background: transparent; color: var(--fg);
+  }
+  footer { margin: 32px 0 8px; color: var(--muted); font-size: .85rem; }
+  footer a { color: inherit; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 id="program">Morning Becomes Eclectic · KCRW</h1>
+    <h2 id="date-long">&nbsp;</h2>
+    <p class="host" id="host"></p>
+  </header>
+
+  <nav aria-label="Show date">
+    <button id="prev" type="button" aria-label="Previous show">◀ Prev</button>
+    <input id="date-input" type="date" aria-label="Show date">
+    <button id="next" type="button" aria-label="Next show">Next ▶</button>
+  </nav>
+
+  <div class="copy-row">
+    <button id="copy" type="button" disabled>Copy tracks for Spotify</button>
+    <div id="copy-hint"></div>
+  </div>
+
+  <div id="status" data-kind="loading" hidden></div>
+
+  <div id="fallback" hidden>
+    <p>Your browser blocked the clipboard. Select all below and copy it (Cmd+C / Ctrl+C):</p>
+    <textarea id="fallback-text" readonly></textarea>
+  </div>
+
+  <ol id="tracks"></ol>
+  <p id="missing" hidden></p>
+
+  <footer>
+    Then in Spotify desktop: New playlist → click into it → paste (Cmd+V / Ctrl+V).
+    Tracklist from <a href="https://www.kcrw.com/music/shows/morning-becomes-eclectic">KCRW</a>.
+    Not affiliated with KCRW or Spotify.
+  </footer>
+</main>
+<script type="module" src="./src/app.js"></script>
+</body>
+</html>
