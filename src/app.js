@@ -25,11 +25,16 @@ const el = {
 
 let current = { date: null, onSpotify: [], offSpotify: [] };
 let requestSeq = 0; // ignore stale fetch results after fast navigation
+let copyLabelTimer = null; // pending restore of the copy button's label
 
 // ---------- routing ----------
 
 function dateFromHash() {
-  return decodeURIComponent(location.hash.replace(/^#/, ''));
+  try {
+    return decodeURIComponent(location.hash.replace(/^#/, ''));
+  } catch {
+    return '';
+  }
 }
 
 function goTo(dateStr, { replace = false } = {}) {
@@ -139,6 +144,10 @@ function renderTracks({ onSpotify, offSpotify }) {
 
 async function load(dateStr) {
   const seq = ++requestSeq;
+  if (copyLabelTimer !== null) {
+    clearTimeout(copyLabelTimer);
+    copyLabelTimer = null;
+  }
   current = { date: dateStr, onSpotify: [], offSpotify: [] };
   renderHeader(dateStr, null);
   el.tracks.replaceChildren();
@@ -195,7 +204,11 @@ el.copy.addEventListener('click', async () => {
     el.copyHint.textContent = `Copied. In Spotify: New playlist → paste (Cmd+V). Name it “${playlistName(current.date)}”.`;
     const label = el.copy.textContent;
     el.copy.textContent = 'Copied ✓';
-    setTimeout(() => { el.copy.textContent = label; }, 1500);
+    if (copyLabelTimer !== null) clearTimeout(copyLabelTimer);
+    copyLabelTimer = setTimeout(() => {
+      copyLabelTimer = null;
+      el.copy.textContent = label;
+    }, 1500);
   } else {
     el.fallback.hidden = false;
     el.fallbackText.value = text;
